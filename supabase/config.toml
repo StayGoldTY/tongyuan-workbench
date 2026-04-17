@@ -1,0 +1,16 @@
+project_id = "tongyuan-workbench"
+
+[functions.chat-query]
+verify_jwt = true
+
+[functions.sources]
+verify_jwt = true
+
+[functions.documents]
+verify_jwt = true
+
+[functions.ingestion-sync]
+verify_jwt = false
+
+[functions.admin-invite]
+verify_jwt = true

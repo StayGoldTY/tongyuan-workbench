@@ -1,0 +1,18 @@
+{
+  "name": "tongyuan-workbench",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TongYuan work knowledge hub with a GitHub Pages frontend, Supabase edge services, and a local collector.",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @tongyuan/web run dev",
+    "build:web": "npm --workspace @tongyuan/web run build",
+    "test:web": "npm --workspace @tongyuan/web run test"
+  }
+}

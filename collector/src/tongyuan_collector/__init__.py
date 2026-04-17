@@ -1,0 +1,1 @@
+"""TongYuan collector package."""
