@@ -25,6 +25,18 @@ def _split_csv(value: str | None) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _read_with_fallback(env_values: dict[str, str], *keys: str, default: str = "") -> str:
+    for key in keys:
+        value = os.getenv(key, env_values.get(key, ""))
+        if value:
+            return value
+    return default
+
+
+def _optional_path(value: str) -> Path | None:
+    return Path(value) if value else None
+
+
 @dataclass(slots=True)
 class CollectorSettings:
     bot: str = "tongyuan"
@@ -46,6 +58,11 @@ class CollectorSettings:
     chunk_overlap_characters: int = 180
     repository_roots: dict[str, Path] = field(default_factory=dict)
     chat_roots: dict[str, Path] = field(default_factory=dict)
+    wechat_account: str = ""
+    wechat_msg_root: Path | None = None
+    wechat_decrypted_root: Path | None = None
+    wechat_key: str = ""
+    wxdump_path: str = "wxdump.exe"
     output_directory: Path = Path(".")
 
     @classmethod
@@ -53,7 +70,8 @@ class CollectorSettings:
         collector_root = Path(__file__).resolve().parents[2]
         env_path = env_file or collector_root / ".env"
         env_values = _parse_env_file(env_path)
-        read = lambda key, default="": os.getenv(key, env_values.get(key, default))
+        read = lambda *keys, default="": _read_with_fallback(env_values, *keys, default=default)
+        read_openai = lambda *keys, default="": _read_with_fallback(env_values, *keys, default=default)
 
         owner_email = read("TONGYUAN_OWNER_EMAIL")
         allowed_emails = _split_csv(read("TONGYUAN_ALLOWED_EMAILS"))
@@ -63,38 +81,56 @@ class CollectorSettings:
         return cls(
             owner_email=owner_email,
             allowed_emails=allowed_emails,
-            permission_scopes=_split_csv(read("TONGYUAN_PERMISSION_SCOPES", "owner_only,redacted")),
+            permission_scopes=_split_csv(
+                read("TONGYUAN_PERMISSION_SCOPES", default="owner_only,redacted"),
+            ),
             sync_endpoint=read("TONGYUAN_SYNC_ENDPOINT"),
             sync_secret=read("TONGYUAN_SYNC_SECRET"),
-            openai_base_url=read("TONGYUAN_OPENAI_BASE_URL"),
-            openai_api_key=read("TONGYUAN_OPENAI_API_KEY"),
-            chat_model=read("TONGYUAN_CHAT_MODEL"),
-            embedding_model=read("TONGYUAN_EMBEDDING_MODEL"),
+            openai_base_url=read_openai("TONGYUAN_OPENAI_BASE_URL", "OPENAI_BASE_URL"),
+            openai_api_key=read_openai("TONGYUAN_OPENAI_API_KEY", "OPENAI_API_KEY"),
+            chat_model=read_openai(
+                "TONGYUAN_CHAT_MODEL",
+                "CHAT_MODEL",
+                "OPENAI_CHAT_MODEL",
+                "OPENAI_MODEL",
+            ),
+            embedding_model=read_openai(
+                "TONGYUAN_EMBEDDING_MODEL",
+                "EMBEDDING_MODEL",
+                "OPENAI_EMBEDDING_MODEL",
+            ),
             repository_roots={
-                "hainan-server": Path(read("TONGYUAN_HAINAN_SERVER", "D:/Code/WorkCode/HAINAN.Server")),
-                "hainan-web": Path(read("TONGYUAN_HAINAN_WEB", "D:/Code/WorkCode/HAINAN.Web")),
+                "hainan-server": Path(read("TONGYUAN_HAINAN_SERVER", default="D:/Code/WorkCode/HAINAN.Server")),
+                "hainan-web": Path(read("TONGYUAN_HAINAN_WEB", default="D:/Code/WorkCode/HAINAN.Web")),
                 "hunan-kellyt": Path(
                     read(
                         "TONGYUAN_HUNAN_KELLYT",
-                        "D:/Code/WorkCode/HUNAN-ALL/KellyT.Solutions.Prod",
+                        default="D:/Code/WorkCode/HUNAN-ALL/KellyT.Solutions.Prod",
                     )
                 ),
                 "hunan-lekima": Path(
                     read(
                         "TONGYUAN_HUNAN_LEKIMA",
-                        "D:/Code/WorkCode/HUNAN-ALL/Lekima-App",
+                        default="D:/Code/WorkCode/HUNAN-ALL/Lekima-App",
                     )
                 ),
             },
             chat_roots={
-                "wechat": Path(read("TONGYUAN_WECHAT_ROOT", "C:/Users/14042/AppData/Roaming/Tencent/WeChat")),
-                "wxwork": Path(read("TONGYUAN_WXWORK_ROOT", "C:/Users/14042/AppData/Roaming/Tencent/WXWork")),
+                "wechat": Path(read("TONGYUAN_WECHAT_ROOT", default="D:/WeChat Files")),
+                "wxwork": Path(
+                    read("TONGYUAN_WXWORK_ROOT", default="C:/Users/14042/AppData/Roaming/Tencent/WXWork")
+                ),
                 "larkshell": Path(
                     read(
                         "TONGYUAN_LARKSHELL_ROOT",
-                        "C:/Users/14042/AppData/Roaming/LarkShell-ka-dajzkx436",
+                        default="C:/Users/14042/AppData/Roaming/LarkShell-ka-dajzkx436",
                     )
                 ),
             },
+            wechat_account=read("TONGYUAN_WECHAT_ACCOUNT", default="shangerty"),
+            wechat_msg_root=_optional_path(read("TONGYUAN_WECHAT_MSG_ROOT")),
+            wechat_decrypted_root=_optional_path(read("TONGYUAN_WECHAT_DECRYPTED_ROOT")),
+            wechat_key=read("TONGYUAN_WECHAT_KEY"),
+            wxdump_path=read("TONGYUAN_WXDUMP_PATH", default="wxdump.exe"),
             output_directory=collector_root / "out",
         )

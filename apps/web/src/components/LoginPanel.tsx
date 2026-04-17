@@ -30,14 +30,14 @@ const LoginPanel = ({
     <main className="login-stage">
       <section className="login-panel">
         <div className="login-copy">
-          <p className="eyebrow">童园工作知识台</p>
-          <h1>让同事用中文业务语言，直接问懂工作。</h1>
+          <p className="eyebrow">童园工作知识库</p>
+          <h1>让同事直接用中文，把工作问明白。</h1>
           <p className="hero-description">
-            童园会把代码、聊天和项目资料整理成可引用的业务回答。默认原始资料留在本机，云端只保留脱敏后的知识片段。
+            童园会把代码、聊天和项目资料整理成可引用的业务回答。原始资料默认留在本机，云端只保存脱敏后的知识片段。
           </p>
           <div className="login-bullets">
             <div className="feature-pill">默认中文协作</div>
-            <div className="feature-pill">默认业务视角回答</div>
+            <div className="feature-pill">默认业务口径回答</div>
             <div className="feature-pill">只同步脱敏内容</div>
           </div>
         </div>

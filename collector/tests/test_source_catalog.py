@@ -1,3 +1,4 @@
+import sqlite3
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -7,11 +8,20 @@ from tongyuan_collector.source_catalog import discover_sources
 
 
 class SourceCatalogTestCase(unittest.TestCase):
-    def test_discover_sources_marks_existing_roots_ready(self) -> None:
+    def test_discover_sources_marks_existing_repo_and_readable_wechat_ready(self) -> None:
         with TemporaryDirectory() as temp_directory:
             root = Path(temp_directory)
             (root / "hainan").mkdir()
-            (root / "wechat").mkdir()
+            msg_root = root / "wechat" / "shangerty" / "Msg"
+            msg_root.mkdir(parents=True)
+
+            connection = sqlite3.connect(msg_root / "MicroMsg.db")
+            try:
+                connection.execute("create table message (content text)")
+                connection.commit()
+            finally:
+                connection.close()
+
             settings = CollectorSettings(
                 repository_roots={
                     "hainan-server": root / "hainan",
@@ -24,6 +34,7 @@ class SourceCatalogTestCase(unittest.TestCase):
                     "wxwork": root / "missing-wxwork",
                     "larkshell": root / "missing-larkshell",
                 },
+                wechat_account="shangerty",
                 output_directory=root / "out",
             )
 

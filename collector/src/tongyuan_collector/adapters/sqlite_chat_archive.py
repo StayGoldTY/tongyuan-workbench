@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import shutil
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
@@ -22,9 +24,11 @@ ATTACHMENT_COLUMNS = ("file_path", "file_name", "file_url", "url", "link")
 SQLITE_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
 TEXT_SUFFIXES = {".log", ".txt", ".json"}
 SQLITE_HEADER = b"SQLite format 3\x00"
+WECHAT_DATABASE_NAMES = ("MicroMsg.db", "ChatMsg.db", "Favorite.db", "Sns.db")
 URL_PATTERN = re.compile(r"https?://[^\s\"'>)]+", re.IGNORECASE)
 TIMESTAMP_PATTERN = re.compile(r"(20\d{2})[-_/\.](\d{2})[-_/\.](\d{2})")
 LONG_NUMBER_PATTERN = re.compile(r"(?<!\d)\d{8,}(?!\d)")
+WXWORK_PLACEHOLDER_DOC_PATTERN = re.compile(r"/doc/D0{6,}", re.IGNORECASE)
 
 SOURCE_RULES = {
     "wechat": {
@@ -114,6 +118,14 @@ SOURCE_LOG_NOISE_PATTERNS = {
         re.compile(r"layer_tree_scroll_metrics_reporter", re.IGNORECASE),
         re.compile(r"frame_caret", re.IGNORECASE),
         re.compile(r"dom_selection", re.IGNORECASE),
+        re.compile(r"mailinlinedcsr", re.IGNORECASE),
+        re.compile(r"composeindex\.html", re.IGNORECASE),
+        re.compile(r"wemail_native_resource", re.IGNORECASE),
+        re.compile(r"qqmailapijs://dispatch_message", re.IGNORECASE),
+        re.compile(r"/doc/D0{6,}", re.IGNORECASE),
+        re.compile(r"bigfont init", re.IGNORECASE),
+        re.compile(r"ratiogroup", re.IGNORECASE),
+        re.compile(r"ssr snapshot styles", re.IGNORECASE),
     ),
     "larkshell": (
         re.compile(r"jash_monitor", re.IGNORECASE),
@@ -143,6 +155,9 @@ class SqliteChatArchiveAdapter(SourceAdapter):
         source: SourceDescriptor,
         settings: CollectorSettings,
     ) -> list[KnowledgeUnitRecord]:
+        if source.source_key == "wechat":
+            return self._collect_wechat_units(source, settings)
+
         units: list[KnowledgeUnitRecord] = []
         rules = SOURCE_RULES.get(source.source_key, {})
 
@@ -175,6 +190,130 @@ class SqliteChatArchiveAdapter(SourceAdapter):
     def _candidate_sqlite_paths(self, source: SourceDescriptor) -> list[Path]:
         paths = self._candidate_paths(source.root_path, SQLITE_SUFFIXES, source, path_kind="sqlite")
         return [path for path in paths if self._is_sqlite_database(path)]
+
+    def _collect_wechat_units(
+        self,
+        source: SourceDescriptor,
+        settings: CollectorSettings,
+    ) -> list[KnowledgeUnitRecord]:
+        collection_root = self._resolve_wechat_collection_root(source, settings)
+        effective_source = SourceDescriptor(
+            source_key=source.source_key,
+            source_family=source.source_family,
+            source_app=source.source_app,
+            workspace=source.workspace,
+            root_path=collection_root,
+            adapter_key=source.adapter_key,
+            health=source.health,
+            notes=source.notes,
+        )
+
+        units: list[KnowledgeUnitRecord] = []
+        for db_path in self._candidate_sqlite_paths(effective_source):
+            if len(units) >= settings.max_chat_units_per_source:
+                break
+            units.extend(
+                self._collect_from_sqlite(
+                    db_path,
+                    effective_source,
+                    settings.max_chat_rows_per_table,
+                    settings.max_chat_units_per_source - len(units),
+                )
+            )
+
+        if units:
+            return units[: settings.max_chat_units_per_source]
+
+        raise RuntimeError("已找到微信消息目录，但目前还没有抽取到可读聊天内容，请确认解密结果是否完整。")
+
+    def _resolve_wechat_collection_root(
+        self,
+        source: SourceDescriptor,
+        settings: CollectorSettings,
+    ) -> Path:
+        if self._has_readable_wechat_database(source.root_path):
+            return source.root_path
+
+        if settings.wechat_decrypted_root and settings.wechat_decrypted_root.exists():
+            if self._has_readable_wechat_database(settings.wechat_decrypted_root):
+                return settings.wechat_decrypted_root
+
+        if self._has_wechat_database_files(source.root_path):
+            if not settings.wechat_key:
+                raise RuntimeError(
+                    "已发现真实微信消息库，但当前数据库仍是加密状态。请先配置 TONGYUAN_WECHAT_KEY，或提供 TONGYUAN_WECHAT_DECRYPTED_ROOT 指向已解密目录。"
+                )
+
+            return self._decrypt_wechat_database_tree(source.root_path, settings)
+
+        raise RuntimeError("没有在微信目录里找到可用的消息库。")
+
+    def _find_wechat_database_paths(self, root: Path) -> list[Path]:
+        matches: list[Path] = []
+        for name in WECHAT_DATABASE_NAMES:
+            direct_path = root / name
+            if direct_path.exists():
+                matches.append(direct_path)
+                continue
+            matches.extend(path for path in root.rglob(name) if path.is_file())
+        deduped: list[Path] = []
+        seen = set()
+        for path in matches:
+            normalized = str(path.resolve())
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            deduped.append(path)
+        return deduped
+
+    def _has_wechat_database_files(self, root: Path) -> bool:
+        return len(self._find_wechat_database_paths(root)) > 0
+
+    def _has_readable_wechat_database(self, root: Path) -> bool:
+        return any(self._is_sqlite_database(path) for path in self._find_wechat_database_paths(root))
+
+    def _decrypt_wechat_database_tree(
+        self,
+        root: Path,
+        settings: CollectorSettings,
+    ) -> Path:
+        wxdump_command = shutil.which(settings.wxdump_path) if settings.wxdump_path else None
+        if not wxdump_command:
+            raise RuntimeError("已提供微信解密 key，但本机没有找到 wxdump.exe，无法自动解密微信数据库。")
+
+        account_name = root.parent.name if root.name.lower() == "msg" else root.name
+        base_output_root = settings.wechat_decrypted_root or (settings.output_directory / "wechat-decrypted")
+        output_root = base_output_root if base_output_root.name.lower() == "msg" else base_output_root / account_name
+        output_root.mkdir(parents=True, exist_ok=True)
+
+        completed = subprocess.run(
+            [
+                wxdump_command,
+                "decrypt",
+                "-k",
+                settings.wechat_key,
+                "-i",
+                str(root),
+                "-o",
+                str(output_root),
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            check=False,
+        )
+
+        if completed.returncode != 0:
+            detail = (completed.stderr or completed.stdout or "").strip()
+            if detail:
+                raise RuntimeError(f"微信数据库自动解密失败：{detail}")
+            raise RuntimeError("微信数据库自动解密失败，wxdump.exe 没有返回可用结果。")
+
+        if not self._has_readable_wechat_database(output_root):
+            raise RuntimeError("微信数据库已执行解密，但输出目录里还没有发现可读的 SQLite 消息库。")
+
+        return output_root
 
     def _candidate_text_paths(self, source: SourceDescriptor) -> list[Path]:
         return self._candidate_paths(source.root_path, TEXT_SUFFIXES, source, path_kind="text")
@@ -580,6 +719,8 @@ class SqliteChatArchiveAdapter(SourceAdapter):
     def _extract_attachment_refs_from_text(self, text: str) -> list[AttachmentReference]:
         references: list[AttachmentReference] = []
         for index, match in enumerate(URL_PATTERN.findall(text)[:6]):
+            if WXWORK_PLACEHOLDER_DOC_PATTERN.search(match):
+                continue
             parsed = urlparse(match)
             query = parse_qs(parsed.query)
             label = parsed.path.rsplit("/", 1)[-1] or f"url-{index + 1}"

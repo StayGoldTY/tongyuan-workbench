@@ -179,7 +179,7 @@ export const sendInvite = async (
     return {
       email: request.email,
       status: "sent",
-      message: "演示模式下已记录这条邀请请求。真实发送需要接通私有后端函数。",
+      message: "当前是演示模式，我已经记下这条邀请请求。接通私有后端后才会真正发出邀请。",
     };
   }
 

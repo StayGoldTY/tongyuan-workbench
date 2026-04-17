@@ -11,14 +11,16 @@ from ..contracts import KnowledgeUnitRecord
 from ..settings import CollectorSettings
 from ..source_catalog import SourceDescriptor
 from .base import SourceAdapter
+from .repository_business_profiles import RepositoryBusinessProfileBuilder
 
 
 CODE_EXTENSIONS = {".cs", ".js", ".json", ".sql", ".ts", ".tsx", ".vue", ".yml", ".yaml"}
-DOCUMENT_EXTENSIONS = {".docx", ".markdown", ".md", ".txt"}
+DOCUMENT_EXTENSIONS = {".docx", ".markdown", ".md", ".mdc", ".txt"}
 SKIPPED_DIRECTORIES = {
     ".git",
     ".idea",
     ".vs",
+    ".claude",
     "bin",
     "dist",
     "lib",
@@ -26,6 +28,7 @@ SKIPPED_DIRECTORIES = {
     "obj",
     "TestResults",
 }
+SKIPPED_FILE_NAMES = {"AGENTS.md", "CLAUDE.md", "agent-router.mdc", "local-agent-roles.mdc"}
 
 
 class CodeRepositoryAdapter(SourceAdapter):
@@ -39,7 +42,16 @@ class CodeRepositoryAdapter(SourceAdapter):
         if not source.root_path.exists():
             return []
 
-        units: list[KnowledgeUnitRecord] = [self._build_repository_overview(source)]
+        business_builder = RepositoryBusinessProfileBuilder(
+            source=source,
+            settings=settings,
+            read_text=self._read_file,
+            to_iso=self._to_iso,
+        )
+        units: list[KnowledgeUnitRecord] = [
+            self._build_repository_overview(source),
+            *business_builder.build(),
+        ]
         commit_digest = self._build_commit_digest(source, settings.max_commit_entries)
         if commit_digest:
             units.append(commit_digest)
@@ -150,6 +162,8 @@ class CodeRepositoryAdapter(SourceAdapter):
             if any(part in SKIPPED_DIRECTORIES for part in path.parts):
                 continue
             if not path.is_file():
+                continue
+            if path.name in SKIPPED_FILE_NAMES:
                 continue
             if path.suffix.lower() not in CODE_EXTENSIONS | DOCUMENT_EXTENSIONS:
                 continue

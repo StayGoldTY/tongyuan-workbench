@@ -24,7 +24,7 @@ import {
   supportsMagicLink,
   supportsRemoteApi,
 } from "./lib/apiClient";
-import { countSyncedSources } from "./lib/workbenchPresentation";
+import { countSyncedSources, formatSourceAppLabel } from "./lib/workbenchPresentation";
 import { supabaseClient } from "./lib/supabaseClient";
 
 type WorkspaceView = "chat" | "sources" | "sync";
@@ -53,8 +53,8 @@ const App = () => {
       setSyncStatuses(statuses);
       setStatusMessage(
         supportsRemoteApi()
-          ? "已连接私有后端，当前页面会读取实时脱敏知识。"
-          : "当前为演示模式，因为还没有配置远程接口。页面展示的是本地示例数据。",
+          ? "已连接私有知识库，当前回答会优先基于脱敏后的真实工作资料生成。"
+          : "当前是演示模式，页面显示的是本地示例数据；接通 Supabase 后会切换到真实知识库。",
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "暂时无法加载工作台。";
@@ -112,11 +112,11 @@ const App = () => {
       const mode = await loginWithMagicLink(email);
       if (mode === "demo") {
         setSessionEmail(email);
-        setStatusMessage("当前已进入演示模式，因为还没有配置 Supabase 登录。");
+        setStatusMessage("当前进入的是演示模式，因为还没有启用 Supabase 登录。");
         return;
       }
 
-      setStatusMessage(`登录链接已发送到 ${email}，请在当前浏览器完成登录。`);
+      setStatusMessage(`登录链接已经发送到 ${email}，请在当前浏览器完成登录。`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "暂时无法登录。";
       setStatusMessage(message);
@@ -142,7 +142,7 @@ const App = () => {
         answer: message,
         confidenceLabel: "insufficient",
         citations: [],
-        notes: ["请求在返回有依据的回答前就失败了。"],
+        notes: ["这次请求还没拿到可用依据，建议稍后再试一次。"],
       });
     } finally {
       setChatBusy(false);
@@ -196,53 +196,35 @@ const App = () => {
   }
 
   return (
-    <main className="workspace-shell">
+    <main className="app-shell">
       <NavigationRail
         activeView={activeView}
+        onRefresh={() => void loadWorkspace()}
         onSelect={setActiveView}
+        onSignOut={() => void handleSignOut()}
+        sessionEmail={sessionEmail}
         sourceCount={sources.length}
         syncedCount={countSyncedSources(syncStatuses)}
+        workspaceBusy={workspaceBusy}
       />
-      <section className="workspace-stage">
-        <section className="panel workspace-hero">
-          <div className="text-stack">
-            <p className="eyebrow">童园工作知识台</p>
-            <h2>把代码、聊天和项目资料，解释成业务同事能直接使用的答案</h2>
-            <p className="hero-description">
-              默认中文界面，默认业务语言，默认附带来源依据。页面适合直接给不懂代码的同事使用。
-            </p>
+      <section className="app-stage">
+        <section className="status-strip">
+          <div className="status-copy">
+            <p className="eyebrow">工作知识库</p>
+            <strong>首页只保留一个聊天框，其他学习和核对信息放到旁边标签。</strong>
+            <p>{statusMessage}</p>
           </div>
-          <div className="badge-row">
-            <span className="feature-pill">当前账号：{sessionEmail}</span>
-            <span className="feature-pill">仅同步脱敏片段</span>
-            <span className="feature-pill">代码与聊天分开检索</span>
-          </div>
-          <div className="hero-metric-row">
-            <article className="hero-metric-card">
-              <span>知识源总数</span>
-              <strong>{sources.length}</strong>
-            </article>
-            <article className="hero-metric-card">
-              <span>最近成功同步</span>
-              <strong>{countSyncedSources(syncStatuses)}</strong>
-            </article>
-            <article className="hero-metric-card">
-              <span>默认回答方式</span>
-              <strong>业务说明</strong>
-            </article>
-          </div>
+          {sources.length > 0 ? (
+            <div className="status-inline-list">
+              {sources.slice(0, 3).map((source) => (
+                <span className="mini-chip" key={source.sourceKey}>
+                  {source.workspace} · {formatSourceAppLabel(source.sourceApp)}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </section>
-        <header className="workspace-header">
-          <p className="status-banner">{statusMessage}</p>
-          <div className="header-actions">
-            <button className="ghost-button" onClick={() => void loadWorkspace()} type="button">
-              {workspaceBusy ? "正在刷新..." : "刷新工作台"}
-            </button>
-            <button className="ghost-button" onClick={() => void handleSignOut()} type="button">
-              退出登录
-            </button>
-          </div>
-        </header>
+
         {activeView === "chat" && (
           <ChatWorkspace
             busy={chatBusy}

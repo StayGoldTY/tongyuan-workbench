@@ -22,7 +22,7 @@ const SyncCenter = ({
   onInvite,
 }: SyncCenterProps) => {
   const [email, setEmail] = useState("");
-  const [reason, setReason] = useState("邀请同事查看童园中的脱敏工作知识。");
+  const [reason, setReason] = useState("邀请同事查看童园里的脱敏工作知识。");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,14 +36,14 @@ const SyncCenter = ({
   };
 
   return (
-    <section className="panel sync-layout">
+    <section className="panel sync-layout content-panel">
       <div className="sync-column">
         <div className="panel-header">
           <div className="text-stack">
-            <p className="eyebrow">同步中心</p>
-            <h2>采集与同步状态</h2>
+            <p className="eyebrow">同步状态</p>
+            <h2>采集进度、异常提醒和分享开通，都放在这里。</h2>
             <p className="supporting-copy">
-              这里会显示每个知识源最近一次处理结果，方便你确认哪些资料已经进入童园。
+              这里会显示每一个知识源最近一次处理结果，方便确认哪些资料已经真正进入童园，哪些还需要继续适配。
             </p>
           </div>
         </div>
@@ -62,30 +62,36 @@ const SyncCenter = ({
           </div>
         </div>
         <div className="sync-list">
-          {syncStatuses.map((status) => (
-            <article key={status.sourceKey} className="sync-card">
-              <div className="source-heading">
-                <strong>{status.workspace}</strong>
-                <span className={`health-${status.status === "failed" ? "failed" : status.status === "skipped" ? "warning" : "ready"}`}>
-                  {formatSyncStatusLabel(status.status)}
-                </span>
-              </div>
-              <p>{status.message}</p>
-              <small>
-                {formatSourceAppLabel(status.sourceApp)} · 发现 {status.discoveredUnits} 条 · 入库{" "}
-                {status.uploadedUnits} 条
-              </small>
-            </article>
-          ))}
+          {syncStatuses.length > 0 ? (
+            syncStatuses.map((status) => (
+              <article key={status.sourceKey} className="sync-card">
+                <div className="source-heading">
+                  <strong>{status.workspace}</strong>
+                  <span className={`health-${status.status === "failed" ? "failed" : status.status === "skipped" ? "warning" : "ready"}`}>
+                    {formatSyncStatusLabel(status.status)}
+                  </span>
+                </div>
+                <p>{status.message}</p>
+                <small>
+                  {formatSourceAppLabel(status.sourceApp)} · 发现 {status.discoveredUnits} 条 · 入库 {status.uploadedUnits} 条
+                </small>
+              </article>
+            ))
+          ) : (
+            <div className="empty-state">
+              <strong>当前还没有同步记录。</strong>
+              <p>完成第一次采集后，这里会出现每个来源的处理结果。</p>
+            </div>
+          )}
         </div>
       </div>
       <div className="sync-column">
         <div className="panel-header">
           <div className="text-stack">
             <p className="eyebrow">协作邀请</p>
-            <h2>给同事开通访问</h2>
+            <h2>给同事开通只读访问。</h2>
             <p className="supporting-copy">
-              邀请只针对可共享的脱敏知识片段，浏览器端不会直接拿到服务密钥。
+              邀请只针对允许共享的脱敏知识片段，浏览器端不会直接暴露服务密钥。
             </p>
           </div>
         </div>

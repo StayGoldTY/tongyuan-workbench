@@ -1,5 +1,7 @@
 # Deployment Guide
 
+中文版首次接入说明见 [docs/supabase-onboarding.zh-CN.md](/D:/Code/HomeSetting/tongyuan-workbench/docs/supabase-onboarding.zh-CN.md)。
+
 ## 1. Supabase project
 
 Create a Supabase project and keep these values ready:
@@ -7,10 +9,19 @@ Create a Supabase project and keep these values ready:
 - project ref
 - database password
 - project URL
-- anon key
+- anon or publishable key
 - service role key
 
-Apply the SQL in [supabase/migrations/20260417_000001_create_tongyuan_schema.sql](/D:/Code/HomeSetting/tongyuan-workbench/supabase/migrations/20260417_000001_create_tongyuan_schema.sql) with `supabase db push` or the SQL editor.
+Apply the SQL in [supabase/migrations/20260417_000001_create_tongyuan_schema.sql](/D:/Code/HomeSetting/tongyuan-workbench/supabase/migrations/20260417_000001_create_tongyuan_schema.sql) with `npx --yes supabase db push` or the SQL editor.
+
+For local deployment, prefer:
+
+```powershell
+Set-Location D:\Code\HomeSetting\tongyuan-workbench
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-supabase.ps1
+```
+
+The setup script writes `apps/web/.env.local`, `collector/.env`, and `supabase/.env`, and can also sync GitHub Actions variables plus deploy Supabase from the same flow.
 
 Set these Edge Function secrets in Supabase:
 
@@ -52,7 +63,7 @@ In Supabase Auth, add the Pages site URL to:
 Include both:
 
 - the production Pages URL
-- the local dev URL such as `http://localhost:5173/tongyuan/`
+- the local dev URL such as `http://localhost:5173/tongyuan-workbench/`
 
 ## 4. Collector sync
 

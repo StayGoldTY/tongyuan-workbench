@@ -2,51 +2,57 @@ type WorkspaceView = "chat" | "sources" | "sync";
 
 interface NavigationRailProps {
   activeView: WorkspaceView;
+  onRefresh: () => void;
   onSelect: (view: WorkspaceView) => void;
+  onSignOut: () => void;
+  sessionEmail: string;
   sourceCount: number;
   syncedCount: number;
+  workspaceBusy: boolean;
 }
 
 const navItems: Array<{ key: WorkspaceView; label: string; description: string }> = [
-  { key: "chat", label: "业务问答", description: "用同事听得懂的话解释项目、流程和讨论结论。" },
-  { key: "sources", label: "知识来源", description: "查看已接入的代码、聊天与资料根目录。" },
-  { key: "sync", label: "同步中心", description: "查看采集结果、同步状态和协作邀请。" },
+  {
+    key: "chat",
+    label: "聊天",
+    description: "直接提问，拿业务化结论和依据。",
+  },
+  {
+    key: "sources",
+    label: "资料来源",
+    description: "查看已接入的代码、聊天和文档资料。",
+  },
+  {
+    key: "sync",
+    label: "同步状态",
+    description: "看采集结果、异常提醒和协作邀请。",
+  },
 ];
 
 const NavigationRail = ({
   activeView,
+  onRefresh,
   onSelect,
+  onSignOut,
+  sessionEmail,
   sourceCount,
   syncedCount,
+  workspaceBusy,
 }: NavigationRailProps) => (
-  <aside className="navigation-rail">
-    <div className="navigation-hero">
-      <p className="eyebrow">TongYuan</p>
-      <h1>童园</h1>
-      <p className="supporting-copy">
-        面向中文同事的私人工作知识台。默认按业务视角回答，不直接把技术实现甩给使用者。
-      </p>
-    </div>
-    <div className="stat-grid">
-      <div className="stat-card">
-        <span>知识源</span>
-        <strong>{sourceCount}</strong>
-      </div>
-      <div className="stat-card">
-        <span>已同步</span>
-        <strong>{syncedCount}</strong>
+  <header className="topbar">
+    <div className="brand-block">
+      <div className="brand-mark">童</div>
+      <div className="brand-copy">
+        <p className="eyebrow">TongYuan</p>
+        <strong>童园</strong>
+        <small>{sessionEmail}</small>
       </div>
     </div>
-    <div className="navigation-highlights">
-      <span className="feature-pill">中文界面</span>
-      <span className="feature-pill">业务解释</span>
-      <span className="feature-pill">脱敏检索</span>
-    </div>
-    <nav aria-label="主导航" className="nav-list">
+    <nav aria-label="主导航" className="topbar-tabs">
       {navItems.map((item) => (
         <button
           key={item.key}
-          className={activeView === item.key ? "nav-item active" : "nav-item"}
+          className={activeView === item.key ? "topbar-tab active" : "topbar-tab"}
           onClick={() => onSelect(item.key)}
           type="button"
         >
@@ -55,7 +61,21 @@ const NavigationRail = ({
         </button>
       ))}
     </nav>
-  </aside>
+    <div className="topbar-side">
+      <div className="compact-stats">
+        <span className="mini-chip">来源 {sourceCount}</span>
+        <span className="mini-chip">已同步 {syncedCount}</span>
+      </div>
+      <div className="topbar-actions">
+        <button className="ghost-button" onClick={onRefresh} type="button">
+          {workspaceBusy ? "刷新中..." : "刷新"}
+        </button>
+        <button className="ghost-button" onClick={onSignOut} type="button">
+          退出
+        </button>
+      </div>
+    </div>
+  </header>
 );
 
 export default NavigationRail;

@@ -40,7 +40,8 @@ class CollectorPipeline:
 
         for source in discover_sources(self._settings):
             catalog_records.append(to_catalog_record(source))
-            if source.health != "ready":
+
+            if source.health == "missing":
                 sync_statuses.append(
                     SourceSyncStatus(
                         source_key=source.source_key,
@@ -49,7 +50,7 @@ class CollectorPipeline:
                         status="skipped",
                         discovered_units=0,
                         uploaded_units=0,
-                        message="Source root was not found on disk.",
+                        message="本机没有找到这个来源目录，已跳过。",
                     )
                 )
                 continue
@@ -66,10 +67,11 @@ class CollectorPipeline:
                             status="skipped",
                             discovered_units=0,
                             uploaded_units=0,
-                            message="No readable units were extracted from this source.",
+                            message="已找到来源，但当前还没有抽取到可入库的可读内容。",
                         )
                     )
                     continue
+
                 prepared_batch = [self._prepare_unit(unit) for unit in raw_units if unit.content_redacted.strip()]
                 prepared_units.extend(prepared_batch)
                 sync_statuses.append(
@@ -80,7 +82,7 @@ class CollectorPipeline:
                         status="synced",
                         discovered_units=len(raw_units),
                         uploaded_units=len(prepared_batch),
-                        message="Source collected and sanitized successfully.",
+                        message="采集、脱敏和切块处理已完成。",
                     )
                 )
             except Exception as error:  # noqa: BLE001
@@ -118,7 +120,7 @@ class CollectorPipeline:
         redacted_content = redact_text(unit.content_redacted)
         redacted_title = redact_text(unit.title)
         redacted_speaker = redact_text(unit.speaker or "") or None
-        summary = self._narrator.build_summary(redacted_title, redacted_content)
+        summary = unit.summary.strip() or self._narrator.build_summary(redacted_title, redacted_content)
         tags = sorted(
             {
                 *unit.tags,

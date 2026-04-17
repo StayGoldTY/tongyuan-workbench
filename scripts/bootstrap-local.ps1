@@ -21,4 +21,8 @@ if (-not (Test-Path "$root\collector\.env")) {
   Copy-Item "$root\collector\.env.example" "$root\collector\.env"
 }
 
+if (-not (Test-Path "$root\supabase\.env")) {
+  Copy-Item "$root\supabase\.env.example" "$root\supabase\.env"
+}
+
 Write-Host "Bootstrap complete."

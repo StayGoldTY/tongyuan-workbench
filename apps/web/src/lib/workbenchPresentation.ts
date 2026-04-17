@@ -1,10 +1,10 @@
 import type { SourceCatalogEntry, SyncSourceStatus } from "@tongyuan/contracts";
 
 export const examplePrompts = [
-  "海南这项功能现在主要服务哪一段业务流程？",
+  "海南这一块现在主要服务哪个业务环节？",
   "湖南这个页面在业务上是给谁用的，主要解决什么问题？",
-  "最近一次同步里，有哪些值得和同事说明的重点变化？",
-  "这件需求之前聊天里大致是怎么定下来的？",
+  "最近一次同步里，哪些变化需要提前和同事说明？",
+  "这件需求之前在聊天里大概是怎么定下来的？",
 ];
 
 const healthLabelMap: Record<SourceCatalogEntry["health"], string> = {
@@ -15,7 +15,7 @@ const healthLabelMap: Record<SourceCatalogEntry["health"], string> = {
 };
 
 const syncStatusLabelMap: Record<SyncSourceStatus["status"], string> = {
-  ready: "就绪",
+  ready: "待处理",
   synced: "已同步",
   skipped: "已跳过",
   failed: "失败",
