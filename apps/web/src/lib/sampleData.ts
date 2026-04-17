@@ -15,7 +15,7 @@ export const demoSources: SourceCatalogEntry[] = [
     rootPath: "D:/Code/WorkCode/HAINAN.Server",
     adapterKey: "code_repository",
     health: "ready",
-    notes: "Legacy .NET backend with service, dto, repository, and mapping layers.",
+    notes: "海南后端主仓库，主要支撑审查流转、资料处理和系统规则能力。",
     lastDiscoveredAt: "2026-04-17T09:40:00Z",
   },
   {
@@ -26,7 +26,7 @@ export const demoSources: SourceCatalogEntry[] = [
     rootPath: "D:/Code/WorkCode/HAINAN.Web",
     adapterKey: "code_repository",
     health: "ready",
-    notes: "Vue-based frontend with modules, mock data, and deployment scripts.",
+    notes: "海南前端主仓库，包含页面、表单、流程入口和部署相关脚本。",
     lastDiscoveredAt: "2026-04-17T09:40:00Z",
   },
   {
@@ -37,7 +37,7 @@ export const demoSources: SourceCatalogEntry[] = [
     rootPath: "D:/Code/WorkCode/HUNAN-ALL/KellyT.Solutions.Prod",
     adapterKey: "code_repository",
     health: "ready",
-    notes: "Surging-based backend for the Hunan regulation platform.",
+    notes: "湖南后端主仓库，主要承接监管平台的流程、统计和规则处理。",
     lastDiscoveredAt: "2026-04-17T09:40:00Z",
   },
   {
@@ -48,7 +48,7 @@ export const demoSources: SourceCatalogEntry[] = [
     rootPath: "D:/Code/WorkCode/HUNAN-ALL/Lekima-App",
     adapterKey: "code_repository",
     health: "ready",
-    notes: "Vue 2 frontend with Element UI, ECharts, and mapping integrations.",
+    notes: "湖南前端主仓库，主要覆盖监管页面、图表展示和业务录入入口。",
     lastDiscoveredAt: "2026-04-17T09:40:00Z",
   },
   {
@@ -59,7 +59,7 @@ export const demoSources: SourceCatalogEntry[] = [
     rootPath: "C:/Users/14042/AppData/Roaming/Tencent/WeChat",
     adapterKey: "sqlite_chat_archive",
     health: "warning",
-    notes: "Local stores found. Some databases may be encrypted or unreadable.",
+    notes: "已发现本地微信目录，但部分数据可能加密或暂时无法稳定解析。",
     lastDiscoveredAt: "2026-04-17T09:40:00Z",
   },
   {
@@ -69,51 +69,62 @@ export const demoSources: SourceCatalogEntry[] = [
     workspace: "WXWork",
     rootPath: "C:/Users/14042/AppData/Roaming/Tencent/WXWork",
     adapterKey: "sqlite_chat_archive",
-    health: "warning",
-    notes: "Logs and client stores found. Parsing falls back when tables are encrypted.",
+    health: "ready",
+    notes: "已发现企业微信日志与可读元数据，当前优先保留下载、文档、邮件等业务线索。",
+    lastDiscoveredAt: "2026-04-17T09:40:00Z",
+  },
+  {
+    sourceKey: "larkshell",
+    sourceFamily: "chat",
+    sourceApp: "larkshell",
+    workspace: "建研智通",
+    rootPath: "C:/Users/14042/AppData/Roaming/LarkShell-ka-dajzkx436",
+    adapterKey: "sqlite_chat_archive",
+    health: "ready",
+    notes: "已发现建研智通工作台模板、下载通知和组织信息等结构化资料。",
     lastDiscoveredAt: "2026-04-17T09:40:00Z",
   },
 ];
 
 export const demoDocuments: Record<string, DocumentDetail> = {
-  "hainan-server-modules": {
-    id: "hainan-server-modules",
-    title: "海南后端模块地图",
-    summary: "HAINAN.Server follows a layered structure with DTO, repository, service, and mapping projects.",
+  "hainan-process-overview": {
+    id: "hainan-process-overview",
+    title: "海南业务流程概况",
+    summary: "当前资料显示，海南相关能力主要围绕项目受理、资料审查、状态流转和结果反馈展开。",
     contentRedacted:
-      "关键目录包括 Bussiness、DataMapper、Dto、Services、Repository 和 Modules。问答时优先通过目录名和提交摘要定位业务边界，再引用具体源码文件。",
+      "从仓库概况和最近的改动摘要来看，海南侧重点不是单一页面，而是围绕项目资料提交、规则校验、状态推进和结果回传这一整条业务链路在持续演进。对业务同事来说，可以把它理解成“前台收资料、后台控规则、流程管状态、结果再回传”的闭环。",
     sourceApp: "git",
     workspace: "HAINAN.Server",
     sourceFamily: "code",
-    tags: ["hainan", "backend", "modules"],
+    tags: ["hainan", "业务流程", "资料审查"],
     eventTime: "2026-04-17T09:40:00Z",
-    sourceUri: "git://HAINAN.Server/module-map",
+    sourceUri: "git://HAINAN.Server/overview",
   },
-  "lekima-page-interface": {
-    id: "lekima-page-interface",
-    title: "湖南前端页面与接口映射",
-    summary: "Lekima-App keeps Vue 2 pages in src and uses axios-based calls for backend integration.",
+  "lekima-page-role": {
+    id: "lekima-page-role",
+    title: "湖南页面业务定位",
+    summary: "湖南前端页面更偏向监管展示、数据录入和流程跟踪，后台负责规则处理和统计汇总。",
     contentRedacted:
-      "Element UI 和 ECharts 是主要依赖。页面问答优先从 src 下的视图组件、路由和接口调用中抽取证据，再把回答关联到具体页面。",
+      "从页面映射和接口摘要来看，湖南前端更像业务操作台：页面负责录入、查询和展示，后台负责规则判断、状态变更和汇总统计。所以同事如果问“这个页面是干什么的”，通常可以先从“给谁看、在哪个环节用、会影响哪个状态”来解释，而不是先说接口名。",
     sourceApp: "git",
     workspace: "Lekima-App",
     sourceFamily: "code",
-    tags: ["hunan", "frontend", "vue2"],
+    tags: ["hunan", "页面定位", "监管平台"],
     eventTime: "2026-04-17T09:40:00Z",
-    sourceUri: "git://Lekima-App/page-interface-map",
+    sourceUri: "git://Lekima-App/page-role",
   },
-  "kellyt-workflow-chat": {
-    id: "kellyt-workflow-chat",
-    title: "湖南后端工作流讨论摘要",
-    summary: "A sanitized chat-derived note about workflow routing and service ownership.",
+  "wxwork-discussion-summary": {
+    id: "wxwork-discussion-summary",
+    title: "企业微信讨论摘要",
+    summary: "当前脱敏记录里能看到文档、下载和邮件相关线索，适合用来辅助回忆需求结论和资料来源。",
     contentRedacted:
-      "同步后的聊天知识单元只保留脱敏文本、时间、发送者和附件元数据。涉及账号、手机号、密钥和连接串的内容都已被替换。",
+      "企业微信当前优先保留了文档页、下载链接和邮件动作等业务痕迹，不直接暴露原始聊天正文。对于同事来说，它更适合回答“当时讨论大概围绕什么资料”“是否有文档或附件线索”，而不是逐字还原聊天原文。",
     sourceApp: "wxwork",
-    workspace: "KellyT.Solutions.Prod",
+    workspace: "WXWork",
     sourceFamily: "chat",
-    tags: ["hunan", "chat", "workflow"],
+    tags: ["聊天线索", "文档", "下载"],
     eventTime: "2026-04-15T10:20:00Z",
-    sourceUri: "sqlite://wxwork/workflow-discussion",
+    sourceUri: "sqlite://wxwork/discussion-summary",
   },
 };
 
@@ -125,7 +136,7 @@ export const demoSyncStatuses: SyncSourceStatus[] = [
     status: "synced",
     discoveredUnits: 124,
     uploadedUnits: 124,
-    message: "Code files, docs, and recent commit digest were sanitized and queued.",
+    message: "代码概况、文档摘要和最近改动已完成脱敏整理。",
   },
   {
     sourceKey: "hunan-lekima",
@@ -134,20 +145,20 @@ export const demoSyncStatuses: SyncSourceStatus[] = [
     status: "synced",
     discoveredUnits: 89,
     uploadedUnits: 89,
-    message: "Vue pages and markdown docs were indexed for retrieval.",
+    message: "页面映射、业务说明和相关资料索引已进入知识库。",
   },
   {
-    sourceKey: "wxwork-local",
+    sourceKey: "wxwork",
     workspace: "WXWork",
     sourceApp: "wxwork",
-    status: "skipped",
-    discoveredUnits: 0,
-    uploadedUnits: 0,
-    message: "Encrypted tables were detected, so the adapter fell back to readable metadata only.",
+    status: "synced",
+    discoveredUnits: 42,
+    uploadedUnits: 42,
+    message: "企业微信已保留可读的下载、文档和邮件类业务线索。",
   },
 ];
 
-const highConfidenceCitation = (id: string): Citation => {
+const buildCitation = (id: string, confidence: number): Citation => {
   const document = demoDocuments[id];
 
   return {
@@ -158,7 +169,7 @@ const highConfidenceCitation = (id: string): Citation => {
     excerpt: document.summary,
     sourceUri: document.sourceUri,
     eventTime: document.eventTime,
-    confidence: 0.87,
+    confidence,
     tags: document.tags,
   };
 };
@@ -169,34 +180,38 @@ export const buildDemoResponse = (question: string): ChatQueryResponse => {
   if (normalizedQuestion.includes("海南")) {
     return {
       answer:
-        "海南相关问题优先从 HAINAN.Server 和 HAINAN.Web 两套仓库检索。当前知识库里最稳的入口是模块地图、README 和最近提交摘要。",
+        "从当前资料看，海南这部分主要不是单独一个技术点，而是一整段业务流转能力。可以先理解成项目资料进入系统后，后台负责校验、流转和结果反馈，前台只是承接入口和展示。对同事沟通时，重点可以放在“它影响哪个业务环节、谁会用到、状态怎么变化”。如果你愿意再给我具体功能名，我还能继续缩到更细的环节。",
       confidenceLabel: "high",
-      citations: [highConfidenceCitation("hainan-server-modules")],
-      notes: ["当前答案来自演示数据。接上真实后端后会返回实时引用。"],
+      citations: [buildCitation("hainan-process-overview", 0.9)],
+      notes: ["当前为演示数据，真实环境下会替换成实时检索结果。"],
     };
   }
 
-  if (normalizedQuestion.includes("页面") || normalizedQuestion.includes("湖南")) {
+  if (normalizedQuestion.includes("湖南") || normalizedQuestion.includes("页面")) {
     return {
       answer:
-        "湖南前端页面问题通常会先落到 Lekima-App 的 Vue 页面与接口调用映射。需要再细分时，可以继续按页面名或菜单名追问。",
+        "湖南这边的页面更像业务操作台，不建议直接按代码结构去解释。比较适合跟同事说的是：这个页面给谁用、处在什么业务环节、录入后会推动什么状态、后台会做哪些判断。简单讲，页面负责呈现和操作，后台负责规则和统计，前后是配套关系。",
       confidenceLabel: "medium",
-      citations: [
-        highConfidenceCitation("lekima-page-interface"),
-        highConfidenceCitation("kellyt-workflow-chat"),
-      ],
-      notes: ["演示模式下会尽量给出最接近的来源，而不是完整实时检索结果。"],
+      citations: [buildCitation("lekima-page-role", 0.82)],
+      notes: ["如果继续补充页面名、菜单名或报表名，童园可以把范围再缩小。"],
+    };
+  }
+
+  if (normalizedQuestion.includes("聊天") || normalizedQuestion.includes("讨论") || normalizedQuestion.includes("结论")) {
+    return {
+      answer:
+        "当前演示里的聊天知识更偏向“辅助回忆结论和资料线索”，不是逐字还原原始对话。也就是说，童园会更适合告诉同事：当时讨论大致围绕什么、有没有相关文档或附件、结论大概落在哪个方向。如果要继续追某条结论，可以再补项目名、时间段或参与方。",
+      confidenceLabel: "medium",
+      citations: [buildCitation("wxwork-discussion-summary", 0.76)],
+      notes: ["真实环境下，系统会优先从脱敏后的聊天片段和元数据里找依据。"],
     };
   }
 
   return {
     answer:
-      "当前演示模式已经把工作代码仓库、聊天客户端目录和同步状态接到统一界面里。接入真实 Supabase 函数后，这里会返回带权限校验的检索问答。",
+      "现在童园已经接入了工作代码、企业微信和建研智通等脱敏资料。你可以直接用业务语言来问，比如“这个功能是做什么的”“这项需求之前怎么定的”“最近同步里有什么重点”，系统会优先给业务结论，再附上来源依据。",
     confidenceLabel: "low",
-    citations: [highConfidenceCitation("hainan-server-modules")],
-    notes: [
-      "没有找到强匹配关键词。",
-      "可以试试：海南模块、湖南页面接口、最近同步状态。",
-    ],
+    citations: [buildCitation("hainan-process-overview", 0.61)],
+    notes: ["如果问题里带上项目名、页面名、时间范围或讨论对象，回答会更贴近实际。"],
   };
 };

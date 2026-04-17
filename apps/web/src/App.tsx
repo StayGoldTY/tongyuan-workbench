@@ -24,6 +24,7 @@ import {
   supportsMagicLink,
   supportsRemoteApi,
 } from "./lib/apiClient";
+import { countSyncedSources } from "./lib/workbenchPresentation";
 import { supabaseClient } from "./lib/supabaseClient";
 
 type WorkspaceView = "chat" | "sources" | "sync";
@@ -35,8 +36,8 @@ const App = () => {
   const [chatBusy, setChatBusy] = useState(false);
   const [workspaceBusy, setWorkspaceBusy] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("Enter a work email to continue.");
-  const [inviteMessage, setInviteMessage] = useState("Invites are sent from the private backend.");
+  const [statusMessage, setStatusMessage] = useState("请输入工作邮箱后继续。");
+  const [inviteMessage, setInviteMessage] = useState("邀请会通过私有后端发出。");
   const [sources, setSources] = useState<SourceCatalogEntry[]>([]);
   const [syncStatuses, setSyncStatuses] = useState<SyncSourceStatus[]>([]);
   const [response, setResponse] = useState<ChatQueryResponse | null>(null);
@@ -47,20 +48,16 @@ const App = () => {
     setWorkspaceBusy(true);
 
     try {
-      const [sourceEntries, statuses] = await Promise.all([
-        listSources(),
-        listSyncStatuses(),
-      ]);
-
+      const [sourceEntries, statuses] = await Promise.all([listSources(), listSyncStatuses()]);
       setSources(sourceEntries);
       setSyncStatuses(statuses);
       setStatusMessage(
         supportsRemoteApi()
-          ? "Connected to the deployed backend."
-          : "Demo mode is active because no remote API is configured.",
+          ? "已连接私有后端，当前页面会读取实时脱敏知识。"
+          : "当前为演示模式，因为还没有配置远程接口。页面展示的是本地示例数据。",
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to load the workspace.";
+      const message = error instanceof Error ? error.message : "暂时无法加载工作台。";
       setStatusMessage(message);
     } finally {
       setWorkspaceBusy(false);
@@ -70,10 +67,12 @@ const App = () => {
   useEffect(() => {
     const hydrateSession = async () => {
       const existingEmail = await getCurrentSessionEmail();
-      if (existingEmail) {
-        setSessionEmail(existingEmail);
-        setStatusMessage(`Signed in as ${existingEmail}.`);
+      if (!existingEmail) {
+        return;
       }
+
+      setSessionEmail(existingEmail);
+      setStatusMessage(`当前已登录：${existingEmail}`);
     };
 
     void hydrateSession();
@@ -89,7 +88,7 @@ const App = () => {
     } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       setSessionEmail(session?.user.email ?? null);
       if (session?.user.email) {
-        setStatusMessage(`Signed in as ${session.user.email}.`);
+        setStatusMessage(`当前已登录：${session.user.email}`);
       }
     });
 
@@ -113,12 +112,13 @@ const App = () => {
       const mode = await loginWithMagicLink(email);
       if (mode === "demo") {
         setSessionEmail(email);
-        setStatusMessage("Entered demo mode because Supabase auth is not configured.");
-      } else {
-        setStatusMessage(`A magic link was sent to ${email}. Finish sign-in in the same browser.`);
+        setStatusMessage("当前已进入演示模式，因为还没有配置 Supabase 登录。");
+        return;
       }
+
+      setStatusMessage(`登录链接已发送到 ${email}，请在当前浏览器完成登录。`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to sign in.";
+      const message = error instanceof Error ? error.message : "暂时无法登录。";
       setStatusMessage(message);
     } finally {
       setLoginBusy(false);
@@ -137,12 +137,12 @@ const App = () => {
 
       setResponse(nextResponse);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to query TongYuan.";
+      const message = error instanceof Error ? error.message : "暂时无法向童园提问。";
       setResponse({
         answer: message,
         confidenceLabel: "insufficient",
         citations: [],
-        notes: ["The request failed before grounded results were returned."],
+        notes: ["请求在返回有依据的回答前就失败了。"],
       });
     } finally {
       setChatBusy(false);
@@ -163,7 +163,7 @@ const App = () => {
       const result = await sendInvite({ email, reason });
       setInviteMessage(result.message);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to send the invite.";
+      const message = error instanceof Error ? error.message : "暂时无法发送邀请。";
       setInviteMessage(message);
     } finally {
       setInviteBusy(false);
@@ -180,7 +180,7 @@ const App = () => {
       setResponse(null);
       setSelectedCitation(null);
       setSelectedDocument(null);
-      setStatusMessage("Signed out.");
+      setStatusMessage("你已退出登录。");
     }
   };
 
@@ -201,25 +201,48 @@ const App = () => {
         activeView={activeView}
         onSelect={setActiveView}
         sourceCount={sources.length}
-        syncedCount={syncStatuses.filter((item) => item.status === "synced").length}
+        syncedCount={countSyncedSources(syncStatuses)}
       />
       <section className="workspace-stage">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">Signed in</p>
-            <h2>{sessionEmail}</h2>
+        <section className="panel workspace-hero">
+          <div className="text-stack">
+            <p className="eyebrow">童园工作知识台</p>
+            <h2>把代码、聊天和项目资料，解释成业务同事能直接使用的答案</h2>
+            <p className="hero-description">
+              默认中文界面，默认业务语言，默认附带来源依据。页面适合直接给不懂代码的同事使用。
+            </p>
           </div>
+          <div className="badge-row">
+            <span className="feature-pill">当前账号：{sessionEmail}</span>
+            <span className="feature-pill">仅同步脱敏片段</span>
+            <span className="feature-pill">代码与聊天分开检索</span>
+          </div>
+          <div className="hero-metric-row">
+            <article className="hero-metric-card">
+              <span>知识源总数</span>
+              <strong>{sources.length}</strong>
+            </article>
+            <article className="hero-metric-card">
+              <span>最近成功同步</span>
+              <strong>{countSyncedSources(syncStatuses)}</strong>
+            </article>
+            <article className="hero-metric-card">
+              <span>默认回答方式</span>
+              <strong>业务说明</strong>
+            </article>
+          </div>
+        </section>
+        <header className="workspace-header">
+          <p className="status-banner">{statusMessage}</p>
           <div className="header-actions">
-            <span className="steady-badge">Raw material stays local. Only redacted evidence syncs.</span>
             <button className="ghost-button" onClick={() => void loadWorkspace()} type="button">
-              {workspaceBusy ? "Refreshing..." : "Refresh"}
+              {workspaceBusy ? "正在刷新..." : "刷新工作台"}
             </button>
             <button className="ghost-button" onClick={() => void handleSignOut()} type="button">
-              Sign Out
+              退出登录
             </button>
           </div>
         </header>
-        <p className="status-banner">{statusMessage}</p>
         {activeView === "chat" && (
           <ChatWorkspace
             busy={chatBusy}

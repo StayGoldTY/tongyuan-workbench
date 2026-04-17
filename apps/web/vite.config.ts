@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react";
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  base: process.env.VITE_BASE_PATH ?? "/tongyuan/",
+  base: process.env.VITE_BASE_PATH ?? "/tongyuan-workbench/",
   plugins: [react()],
   resolve: {
     alias: {

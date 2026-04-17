@@ -11,7 +11,7 @@ Deno.serve(async (request) => {
     await getAuthenticatedEmail(request);
     const documentId = new URL(request.url).searchParams.get("id");
     if (!documentId) {
-      return withJson(400, { error: "Missing document id" });
+      return withJson(400, { error: "缺少文档标识。" });
     }
 
     const userClient = createUserClient(request.headers.get("Authorization"));
@@ -25,7 +25,7 @@ Deno.serve(async (request) => {
       throw error;
     }
     if (!data) {
-      return withJson(404, { error: "Document not found" });
+      return withJson(404, { error: "没有找到这条来源详情。" });
     }
 
     return withJson(200, {
@@ -41,6 +41,6 @@ Deno.serve(async (request) => {
       sourceUri: data.source_uri,
     });
   } catch (error) {
-    return withJson(401, { error: error instanceof Error ? error.message : "Unauthorized" });
+    return withJson(401, { error: error instanceof Error ? error.message : "读取来源详情失败。" });
   }
 });

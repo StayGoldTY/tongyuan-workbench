@@ -13,7 +13,7 @@ Deno.serve(async (request) => {
 
     const payload = await request.json();
     if (!payload.email) {
-      return withJson(400, { error: "Missing invite email" });
+      return withJson(400, { error: "缺少受邀邮箱。" });
     }
 
     const adminClient = createAdminClient();
@@ -31,9 +31,9 @@ Deno.serve(async (request) => {
     return withJson(200, {
       email: payload.email,
       status: "sent",
-      message: `Invitation sent to ${payload.email}.`,
+      message: `已向 ${payload.email} 发送邀请。`,
     });
   } catch (error) {
-    return withJson(401, { error: error instanceof Error ? error.message : "Invite failed" });
+    return withJson(401, { error: error instanceof Error ? error.message : "邀请发送失败。" });
   }
 });

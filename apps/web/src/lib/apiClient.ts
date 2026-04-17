@@ -94,7 +94,6 @@ export const getCurrentAccessToken = async (): Promise<string | undefined> => {
   }
 
   const { data } = await supabaseClient.auth.getSession();
-
   return data.session?.access_token;
 };
 
@@ -104,7 +103,6 @@ export const getCurrentSessionEmail = async (): Promise<string | null> => {
   }
 
   const { data, error } = await supabaseClient.auth.getUser();
-
   if (error) {
     return null;
   }
@@ -129,7 +127,6 @@ export const listSources = async (): Promise<SourceCatalogEntry[]> => {
   }
 
   const accessToken = await getCurrentAccessToken();
-
   return fetchJson<SourceCatalogEntry[]>("/sources", undefined, accessToken);
 };
 
@@ -139,7 +136,6 @@ export const listSyncStatuses = async (): Promise<SyncSourceStatus[]> => {
   }
 
   const accessToken = await getCurrentAccessToken();
-
   return fetchJson<SyncSourceStatus[]>("/sources?view=sync", undefined, accessToken);
 };
 
@@ -151,7 +147,6 @@ export const queryTongyuan = async (
   }
 
   const accessToken = await getCurrentAccessToken();
-
   return fetchJson<ChatQueryResponse>(
     "/chat/query",
     {
@@ -170,8 +165,11 @@ export const getDocumentDetail = async (
   }
 
   const accessToken = await getCurrentAccessToken();
-
-  return fetchJson<DocumentDetail | null>(`/documents?id=${encodeURIComponent(documentId)}`, undefined, accessToken);
+  return fetchJson<DocumentDetail | null>(
+    `/documents?id=${encodeURIComponent(documentId)}`,
+    undefined,
+    accessToken,
+  );
 };
 
 export const sendInvite = async (
@@ -181,12 +179,11 @@ export const sendInvite = async (
     return {
       email: request.email,
       status: "sent",
-      message: "Demo mode accepted the invite request. Real delivery needs a deployed Supabase function.",
+      message: "演示模式下已记录这条邀请请求。真实发送需要接通私有后端函数。",
     };
   }
 
   const accessToken = await getCurrentAccessToken();
-
   return fetchJson<InviteResponse>(
     "/admin/invite",
     {

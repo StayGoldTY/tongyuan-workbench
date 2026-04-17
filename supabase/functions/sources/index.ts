@@ -61,6 +61,6 @@ Deno.serve(async (request) => {
       })),
     );
   } catch (error) {
-    return withJson(401, { error: error instanceof Error ? error.message : "Unauthorized" });
+    return withJson(401, { error: error instanceof Error ? error.message : "读取来源信息失败。" });
   }
 });

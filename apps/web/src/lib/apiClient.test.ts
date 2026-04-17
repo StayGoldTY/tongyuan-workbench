@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { mapLogicalPathToFunctionPath, queryTongyuan } from "./apiClient";
 
 describe("queryTongyuan", () => {
-  it("returns the Hainan demo citation for Hainan-focused questions", async () => {
+  it("在演示模式下会按海南业务问题返回海南仓库引用", async () => {
     const response = await queryTongyuan({
       bot: "tongyuan",
-      question: "海南后端模块怎么分层？",
+      question: "海南这项功能现在主要服务哪一段业务流程？",
       topK: 5,
     });
 
@@ -15,7 +15,7 @@ describe("queryTongyuan", () => {
 });
 
 describe("mapLogicalPathToFunctionPath", () => {
-  it("maps the logical chat path to the Supabase function path", () => {
+  it("会把逻辑聊天路径映射到 Supabase 函数路径", () => {
     expect(mapLogicalPathToFunctionPath("/chat/query")).toBe("/chat-query");
     expect(mapLogicalPathToFunctionPath("/admin/invite")).toBe("/admin-invite");
     expect(mapLogicalPathToFunctionPath("/documents?id=abc")).toBe("/documents?id=abc");
