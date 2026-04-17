@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import urlunsplit, unquote, urlsplit
 
 
 REDACTION_RULES: list[tuple[str, re.Pattern[str], str]] = [
@@ -18,6 +19,19 @@ ASSIGNMENT_RULE = re.compile(
 CONNECTION_STRING_RULE = re.compile(
     r"(?i)\b(User ID|Uid|Server|Host|Database|Initial Catalog|Password)\b\s*=\s*([^;]+)"
 )
+URL_RULE = re.compile(r"https?://[^\s\"'>)]+", re.IGNORECASE)
+
+
+def _sanitize_url(match: re.Match[str]) -> str:
+    raw_url = match.group(0).rstrip("',.;")
+    suffix = match.group(0)[len(raw_url) :]
+    try:
+        parsed = urlsplit(raw_url)
+        cleaned_url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+    except ValueError:
+        cleaned_url = raw_url.split("?", 1)[0].split("#", 1)[0]
+    cleaned_url = unquote(cleaned_url)
+    return f"{cleaned_url}{suffix}"
 
 
 def redact_text(content: str) -> str:
@@ -27,4 +41,5 @@ def redact_text(content: str) -> str:
 
     redacted = ASSIGNMENT_RULE.sub(lambda match: f"{match.group(1)}=[REDACTED]", redacted)
     redacted = CONNECTION_STRING_RULE.sub(lambda match: f"{match.group(1)}=[REDACTED]", redacted)
+    redacted = URL_RULE.sub(_sanitize_url, redacted)
     return redacted

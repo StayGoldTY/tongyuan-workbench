@@ -6,7 +6,7 @@ from typing import Any
 from .adapters.code_repository import CodeRepositoryAdapter
 from .adapters.sqlite_chat_archive import SqliteChatArchiveAdapter
 from .chunking import KnowledgeChunker
-from .contracts import IngestionBatch, KnowledgeChunkRecord, KnowledgeUnitRecord, SourceSyncStatus
+from .contracts import AttachmentReference, IngestionBatch, KnowledgeChunkRecord, KnowledgeUnitRecord, SourceSyncStatus
 from .embedding import OpenAICompatibleEmbedder
 from .redaction import redact_text
 from .settings import CollectorSettings
@@ -130,6 +130,15 @@ class CollectorPipeline:
                 ),
             }
         )
+        attachment_refs = [
+            AttachmentReference(
+                label=redact_text(reference.label),
+                uri=redact_text(reference.uri) if reference.uri else None,
+                mime_type=reference.mime_type,
+                size_bytes=reference.size_bytes,
+            )
+            for reference in unit.attachment_refs
+        ]
 
         chunks = self._chunker.split(redacted_content)
         chunk_embeddings = self._embedder.embed_texts(chunks)
@@ -163,6 +172,7 @@ class CollectorPipeline:
         unit.tags = tags
         unit.allowed_emails = self._settings.allowed_emails.copy()
         unit.permissions = self._settings.permission_scopes.copy()
+        unit.attachment_refs = attachment_refs
         unit.checksum = checksum
         unit.chunks = prepared_chunks
         return unit
