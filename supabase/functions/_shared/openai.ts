@@ -174,10 +174,15 @@ export const createQueryEmbedding = async (question: string): Promise<number[] |
     return null;
   }
 
-  const response = await requestJson("/embeddings", {
-    model: embeddingModel,
-    input: question,
-  });
+  let response: unknown;
+  try {
+    response = await requestJson("/embeddings", {
+      model: embeddingModel,
+      input: question,
+    });
+  } catch {
+    return null;
+  }
 
   const data = (response as Record<string, unknown>).data;
   if (!Array.isArray(data) || !data[0] || typeof data[0] !== "object") {

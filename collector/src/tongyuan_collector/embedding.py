@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from urllib import error
 from urllib import request
 
 from .settings import CollectorSettings
@@ -35,8 +36,15 @@ class OpenAICompatibleEmbedder:
             method="POST",
         )
 
-        with request.urlopen(http_request, timeout=60) as response:
-            raw = json.loads(response.read().decode("utf-8"))
+        try:
+            with request.urlopen(http_request, timeout=60) as response:
+                raw = json.loads(response.read().decode("utf-8"))
+        except error.HTTPError:
+            return [None for _ in texts]
+        except error.URLError:
+            return [None for _ in texts]
+        except Exception:
+            return [None for _ in texts]
 
         items = raw.get("data", [])
         return [item.get("embedding") for item in items]
